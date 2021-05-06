@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard
+{% endblock %}
+
+{% block main %}
+
+    <div>
+        {%for message in params%}
+            <div>
+                <h2>{{message}}</h2>
+            </div>
+        {%endfor%}
+        
+    </div>
+{% endblock %}

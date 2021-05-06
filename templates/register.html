@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    register
+{% endblock %}
+
+{% block main %}
+    <form action="/register" method="post">
+       <!-- Special version of Bootstrap that only affects content wrapped in .bootstrap-iso -->
+        <link rel="stylesheet" href="https://formden.com/static/cdn/bootstrap-iso.css" />
+
+        <!-- Inline CSS based on choices in "Settings" tab -->
+        <style>.bootstrap-iso .formden_header h2, .bootstrap-iso .formden_header p, .bootstrap-iso form{font-family: Arial, Helvetica, sans-serif; color: black}.bootstrap-iso form button, .bootstrap-iso form button:hover{color: white !important;} .asteriskField{color: red;}</style>
+
+        <!-- HTML Form (wrapped in a .bootstrap-iso div) -->
+        <div class="bootstrap-iso">
+         <div class="container-fluid">
+          <div class="row">
+           <div class="col-md-6 col-sm-6 col-xs-12">
+            <form method="post">
+             <div class="form-group ">
+              <label class="control-label requiredField" for="name">
+               Name
+               <span class="asteriskField">
+                *
+               </span>
+              </label>
+              <input class="form-control" id="name" name="name" type="text" placeholder='Pepper Potts' value="{{'' if 'name' not in params.keys() else params['name']}}"/>
+             </div>
+             <div class="form-group ">
+              <label class="control-label requiredField" for="email">
+               Email
+               <span class="asteriskField">
+                *
+               </span>
+              </label>
+              <input class="form-control" id="email" name="email" type="text" placeholder='pepper.potts@stark.com'  value="{{'' if 'email' not in params.keys() else params['email']}}"/>
+             </div>
+             <div class="form-group ">
+              <label for="phone">Enter a phone number:</label><br><br>
+              <input type="tel" id="tel" name="tel" placeholder="123-456-7890"  value="{{'' if 'tel' not in params.keys() else params['tel']}}" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required><br><br>
+              <small>Format: 123-456-7890</small><br><br>
+             </div>
+             <div class="form-group ">
+                <label for="machine">Emter your FIHHN machine code:</label><br><br>
+                <input type="text" id="machine" name="machine" placeholder="OSG1BS2AW"  value="{{'' if 'machine' not in params.keys() else params['machine']}}" required><br><br>
+                
+            </div>
+             <div class="form-group ">
+              <label class="control-label requiredField" for="subject">
+               Password
+               <span class="asteriskField">
+                *
+               </span>
+              </label>
+              <input class="form-control" id="password" name="password" type="password"/>
+             </div>
+             <div class="form-group ">
+              <label class="control-label requiredField" for="subject2">
+               Confirm password
+               <span class="asteriskField">
+                *
+               </span>
+              </label>
+              <input class="form-control" id="confirmation" name="confirmation" type="password"/>
+             </div>
+
+             <div class="form-group">
+              <div>
+               <button class="btn btn-primary " name="submit" type="submit">
+                Submit
+               </button>
+              </div>
+             </div>
+            </form>
+           </div>
+          </div>
+         </div>
+        </div>
+    </form>
+{% endblock %}
