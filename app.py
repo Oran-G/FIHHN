@@ -11,8 +11,9 @@ from helpers import apology, login_required, lookup, is_valid_number
 from datetime import datetime
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
-
-client = Client(os.environ.get('TWILIO_ACCOUNT_SID'), os.environ.get('TWILIO_AUTH_TOKEN'))
+# import MySQLdb
+import mysql.connector
+# client = Client(os.environ.get('TWILIO_ACCOUNT_SID'), os.environ.get('TWILIO_AUTH_TOKEN'))
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -37,17 +38,25 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///keys.db")
+# db = MySQLdb.connect(passwd="moonpie",db="thangs").cursor()
+# db = SQL("sqlite:///keys.db")
+mydb = mysql.connector.connect(
+  host="31.170.167.102",
+  user="u997324830_dkUVG",
+  password="+W;Ca:6fR;2",
+  database='u997324830_z5GnK'
+)
+db = mydb.cursor()
 
-
-
+# main home page
 @app.route("/")
 def index():
+    print(db.execute('INSERT INTO users (Email) VALUES ("test@test.co")'))
     return render_template('index.html', message=None)
 
 
 
-
+# login to existing account
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in"""
@@ -87,7 +96,7 @@ def login():
     else:
         return render_template("login.html", params={}, message=None)
 
-
+# logout of current account
 @app.route("/logout")
 def logout():
     """Log user out"""
@@ -100,7 +109,7 @@ def logout():
     return redirect("/")
 
 
-
+# register a new account
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
@@ -146,7 +155,7 @@ def register():
         return render_template("register.html", params={}, message=None)
 
 
-
+# change password
 @app.route("/new_pass", methods=["GET", "POST"])
 @login_required
 def new_pass():
@@ -173,7 +182,7 @@ for code in default_exceptions:
 
 
 
-
+# submit medication 1 information
 @app.route("/medications", methods=["GET", "POST"])
 @login_required
 
@@ -211,29 +220,10 @@ def medications():
         return render_template('medication.html', params={}, message=None)
 
 
-
+# submit medication 2 information
 @app.route('/medication2', methods=["POST"])
 @login_required
 def medication2():
-    print('hello world')
-    # med2 = {
-    #     'name': request.form.get('name2'),
-    #     'dosage': request.form.get('dosage2'),
-    #     'often': request.form.get('often2'),
-    #     'amount': request.form.get('pills2')
-        
-
-    # }
-    # # if med2['often'] == 1:
-    # if True:
-    #     med2.update({
-    #         'stime': request.form.get('stime2'),
-    #         'etiime': request.form.get('etime2'),
-    #     })
-    # # pass
-    
-    # db.execute(f"UPDATE medications SET name={med2['name']}, start_time={med2['stime']}, end_time={med2['etime']}, dosage={med2['dosage']}, amount={med2['amount']}, user_id={session['user_id']} WHERE RowID={session['info']['med2']}")
-    
     med2 = {
         'name': request.form.get('name2'),
         'dosage': request.form.get('dosage2'),
@@ -241,9 +231,9 @@ def medication2():
     
     }
 
-    print(request.form.get('name1'))
-    print(med2)
-    print(request.form.get('stime2'))
+    # print(request.form.get('name1'))
+    # print(med2)
+    # print(request.form.get('stime2'))
     # if med1['often'] == 1:
     if True:
         med2.update({
@@ -252,8 +242,8 @@ def medication2():
         })
     # db.execute(f"UPDATE 'medications' SET name={med1['name']}, start_time={med1['stime']}, end_time={med1['etime']}, dosage={med1['dosage']}, amount={med1['amount']}, user_id={session['user_id']} WHERE RowID={session['info']['med1']}")
     # print(db.execute('select * from medications'))
-    print(med2)
-    print(type(med2['etime']))
+    # print(med2)
+    # print(type(med2['etime']))
     
     db.execute("UPDATE medications SET  name=? WHERE RowID=?", med2['name'], session['info']['med2'])
     db.execute(f"UPDATE medications SET  start_time={med2['stime']} WHERE RowID={session['info']['med2']}")
@@ -265,6 +255,7 @@ def medication2():
 
 import time
 from math import floor
+# show the status of medications for the day
 @app.route("/dashboard", methods=["GET"])
 @login_required
 def dashboard():
@@ -289,12 +280,12 @@ def dashboard():
     return render_template('dash.html', params=messages, message=None)
 
 
-
+# redirect to our website
 @app.route("/dispense", methods=["GET", "POST"])
 # @login_required
 def dispense():
-    return render_template('dispense.html', message=None)
+    return redirect('http://sites.google.com/frisch.org/fihhn/home')
+
+
 def error(path, params, message=None):
     return render_template(path, params=params, message=message)
-
-
