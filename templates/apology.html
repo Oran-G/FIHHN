@@ -5,5 +5,11 @@
 {% endblock %}
 
 {% block main %}
-    <img alt="{{ top }}" class="border" src="http://memegen.link/custom/{{ top | urlencode }}/{{ bottom | urlencode }}.jpg?alt=https://i.imgur.com/CsCgN7Ll.png" title="{{ top }}">
-{% endblock %}
+    <!-- <img alt="{{ top }}" class="border" src="http://memegen.link/custom/{{ top | urlencode }}/{{ bottom | urlencode }}.jpg?alt=https://i.imgur.com/CsCgN7Ll.png" title="{{ top }}"> -->
+    <h2>Error {{top}}. {{bottom}}</h2>
+    <video width="320" height="240" controls>
+        <source src="rickroll.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
+    {% endblock %}

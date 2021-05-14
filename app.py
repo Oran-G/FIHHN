@@ -51,7 +51,11 @@ db = mydb.cursor()
 # main home page
 @app.route("/")
 def index():
-    print(db.execute('INSERT INTO users (Email) VALUES ("test@test.co")'))
+    # db.execute('SELECT * FROM tricksumo_nodemcu LIMIT 1')
+    # db.execute("INSERT INTO users (Email) VALUES ('test@test.co')")
+    # mydb.commit()
+    # print(db.fetchall())
+    print(db.lastrowid)
     return render_template('index.html', message=None)
 
 
@@ -74,22 +78,41 @@ def login():
         if not info['email'] or not info['password']:
             return error('login.html', params={info}, message='Information is incomplete')
 
-        # Query database for username
-        rows = db.execute("SELECT RowID, name, tel, machine, email, hash, med1, med2 FROM users WHERE email = :username",
-                          username=(request.form.get("email")).lower())
-        print(rows[0].keys())
+        # Query database for username\
+        mydb = mysql.connector.connect(
+            host="31.170.167.102",
+            user="u997324830_dkUVG",
+            password="+W;Ca:6fR;2",
+            database='u997324830_z5GnK'
+        )
+        db = mydb.cursor()
+        print(f"SELECT * FROM users WHERE email = '{request.form.get('email')}'")
+    
+        db.execute(f"SELECT * FROM users WHERE email = '{request.form.get('email')}'")
+        # db.execute(f"SELECT * FROM users")
+        rows = db.fetchall()
+        # db.execute("SELECT RowID, name, tel, machine, email, hash, med1, med2 FROM users WHERE email = :username",
+        #                   username=(request.form.get("email")).lower())
+        # print(rows[0].keys())
 
         # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
+        if len(rows) != 1 or not check_password_hash(rows[0][2], request.form.get("password")):
             del info['password']
-            return error('login.html', params={info}, message='Passwords do not match')
+            return error('login.html', params=info, message='Passwords do not match')
 
         # Remember which user has logged in
         
-        session["user_id"] = rows[0]["rowid"]
-        session['info'] = rows[0]
+        session["user_id"] = rows[0][0]
+        session['info'] = {
+            'email':rows[0][1],
+            'hash': rows[0][2],
+            'machine': rows[0][3],
+            'name': rows[0][4],
+            'tel': rows[0][5],
+        }
 
         # Redirect user to home page
+        print(session)
         return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -133,17 +156,28 @@ def register():
             return error('register.html', params=info, message='Passwords do not match')
 
 
-        rows = db.execute("SELECT * FROM users WHERE email = :username",
-                          username=request.form.get("email"))
+        # rows = db.execute("SELECT * FROM users WHERE email = :username",
+        #                   username=request.form.get("email"))
+        mydb = mysql.connector.connect(
+            host="31.170.167.102",
+            user="u997324830_dkUVG",
+            password="+W;Ca:6fR;2",
+            database='u997324830_z5GnK'
+        )
+        db = mydb.cursor()
+        print(f"SELECT * FROM users WHERE email = '{request.form.get('email')}'")
+    
+        db.execute(f"SELECT * FROM users WHERE email = '{request.form.get('email')}'")
+        rows = db.fetchall()
+        # mydb.commit()
+        # print(db.fetchall())
+        # print(db.lastrowid)
 
        
         if len(rows) == 0:
-            max_med = int(db.execute('SELECT RowID FROM medications WHERE RowID = (SELECT MAX(RowID) FROM medications)')[0]['rowid'])
-            for i in range(2):
-                db.execute(f'INSERT INTO medications (slot) VALUES ({i+1})')
-            print(type(max_med))
-            print(info)
-            db.execute("INSERT INTO users (email, hash, name, tel, machine, med1, med2) VALUES (?, ?, ?, ?, ?, ?, ?)", info['email'], info['passhash'], info['name'], info['tel'], info['machine'], max_med+1, max_med+2)
+            db.execute(f"INSERT INTO users (Email, Hash, Name, Tel, Machine) VALUES ('{info['email']}', '{info['passhash']}', '{info['name']}', '{info['tel']}', '{info['machine']}')")
+            db.execute(f'INSERT INTO medication (Row_ID) VALUES ({db.lastrowid})')
+            mydb.commit()
             return redirect("/")
         else:
             del info['email']
@@ -163,7 +197,16 @@ def new_pass():
         password = request.form.get('password')
         confirmation =  request.form.get('confirmation')
         if password == confirmation:
-            db.execute("UPDATE 'users' SET hash = ? WHERE id = ?", generate_password_hash(password), session['user_id'])
+            mydb = mysql.connector.connect(
+                host="31.170.167.102",
+                user="u997324830_dkUVG",
+                password="+W;Ca:6fR;2",
+                database='u997324830_z5GnK'
+            )
+            db = mydb.cursor()
+            rows = db.fetchall()
+            db.execute(f"UPDATE users SET hash = '{generate_password_hash(password)}' WHERE Row_ID = {session['user_id']}")
+            mydb.commit()
             return redirect('/')
         else:
             return error('new_pass.html', params={}, message='password must match confirmation')
@@ -189,7 +232,13 @@ for code in default_exceptions:
 def medications():
     if request.method == "POST":
         print('hi')
-    
+        mydb = mysql.connector.connect(
+            host="31.170.167.102",
+            user="u997324830_dkUVG",
+            password="+W;Ca:6fR;2",
+            database='u997324830_z5GnK'
+        )
+        db = mydb.cursor()
         med1 = {
             'name': request.form.get('name1'),
             'dosage': request.form.get('dosage1'),
@@ -203,16 +252,23 @@ def medications():
                 'etime': (int(request.form.get('etime1')[:2]) * 60) + int(request.form.get('etime1')[3:]),
             })
         # db.execute(f"UPDATE 'medications' SET name={med1['name']}, start_time={med1['stime']}, end_time={med1['etime']}, dosage={med1['dosage']}, amount={med1['amount']}, user_id={session['user_id']} WHERE RowID={session['info']['med1']}")
-        print(db.execute('select * from medications'))
-        print(med1)
-        print(type(med1['etime']))
+
+
+        # db.execute(f"UPDATE medications SET (, , , , )=('{}', '{}', '{}', '{}', '{}') WHERE RowID={}")
         
-        db.execute("UPDATE medications SET  name=? WHERE RowID=?", med1['name'], session['info']['med1'])
-        db.execute(f"UPDATE medications SET  start_time={med1['stime']} WHERE RowID={session['info']['med1']}")
-        db.execute(f"UPDATE medications SET  end_time={med1['etime']} WHERE RowID={session['info']['med1']}")
-        db.execute(f"UPDATE medications SET dosage={med1['dosage']} WHERE RowID={session['info']['med1']}")
-        db.execute(f"UPDATE medications SET amount={med1['amount']} WHERE RowID={session['info']['med1']}")
-        db.execute(f"UPDATE medications SET user_id={session['user_id']} WHERE RowID={session['info']['med1']}")
+
+        db.execute(f"UPDATE medication SET  Medication1='{ med1['name']}' WHERE Row_ID={session['user_id']}")
+        db.execute(f"UPDATE medication SET  S_TimeHR={request.form.get('stime1')[:2]} WHERE Row_ID={session['user_id']}")
+        db.execute(f"UPDATE medication SET  S_TimeMIN={request.form.get('stime1')[3:]} WHERE Row_ID={session['user_id']}")
+
+        db.execute(f"UPDATE medication SET  E_TimeHR={request.form.get('etime1')[:2]} WHERE Row_ID={session['user_id']}")
+        db.execute(f"UPDATE medication SET  E_TimeMIN={request.form.get('etime1')[3:]} WHERE Row_ID={session['user_id']}")
+        # db.execute(f"UPDATE medications SET dosage={med1['dosage']} WHERE RowID={session['info']['med1']}")
+        # db.execute(f"UPDATE medications SET amount={med1['amount']} WHERE RowID={session['info']['med1']}")
+        # db.execute(f"UPDATE medications SET user_id={session['user_id']} WHERE RowID={session['info']['med1']}")
+        mydb.commit()
+        db.execute('select * from medication')
+        print(db.fetchall())
         return redirect('/')
 
         
@@ -224,6 +280,13 @@ def medications():
 @app.route('/medication2', methods=["POST"])
 @login_required
 def medication2():
+    mydb = mysql.connector.connect(
+        host="31.170.167.102",
+        user="u997324830_dkUVG",
+        password="+W;Ca:6fR;2",
+        database='u997324830_z5GnK'
+    )
+    db = mydb.cursor()
     med2 = {
         'name': request.form.get('name2'),
         'dosage': request.form.get('dosage2'),
@@ -245,12 +308,28 @@ def medication2():
     # print(med2)
     # print(type(med2['etime']))
     
-    db.execute("UPDATE medications SET  name=? WHERE RowID=?", med2['name'], session['info']['med2'])
-    db.execute(f"UPDATE medications SET  start_time={med2['stime']} WHERE RowID={session['info']['med2']}")
-    db.execute(f"UPDATE medications SET  end_time={med2['etime']} WHERE RowID={session['info']['med2']}")
-    db.execute(f"UPDATE medications SET dosage={med2['dosage']} WHERE RowID={session['info']['med2']}")
-    db.execute(f"UPDATE medications SET amount={med2['amount']} WHERE RowID={session['info']['med2']}")
-    db.execute(f"UPDATE medications SET user_id={session['user_id']} WHERE RowID={session['info']['med2']}")
+    # db.execute("UPDATE medications SET  name=? WHERE RowID=?", med2['name'], session['info']['med2'])
+    # db.execute(f"UPDATE medications SET  start_time={med2['stime']} WHERE RowID={session['info']['med2']}")
+    # db.execute(f"UPDATE medications SET  end_time={med2['etime']} WHERE RowID={session['info']['med2']}")
+    # db.execute(f"UPDATE medications SET dosage={med2['dosage']} WHERE RowID={session['info']['med2']}")
+    # db.execute(f"UPDATE medications SET amount={med2['amount']} WHERE RowID={session['info']['med2']}")
+    # db.execute(f"UPDATE medications SET user_id={session['user_id']} WHERE RowID={session['info']['med2']}")
+
+
+    db.execute(f"UPDATE medication SET  Medication2='{ med2['name']}' WHERE Row_ID={session['user_id']}")
+    db.execute(f"UPDATE medication SET  S_TimeHR2={request.form.get('stime2')[:2]} WHERE Row_ID={session['user_id']}")
+    db.execute(f"UPDATE medication SET  S_TimeMIN2={request.form.get('stime2')[3:]} WHERE Row_ID={session['user_id']}")
+
+    db.execute(f"UPDATE medication SET  E_TimeHR2={request.form.get('etime2')[:2]} WHERE Row_ID={session['user_id']}")
+    db.execute(f"UPDATE medication SET  E_TimeMIN2={request.form.get('etime2')[3:]} WHERE Row_ID={session['user_id']}")
+    # db.execute(f"UPDATE medications SET dosage={med1['dosage']} WHERE RowID={session['info']['med1']}")
+    # db.execute(f"UPDATE medications SET amount={med1['amount']} WHERE RowID={session['info']['med1']}")
+    # db.execute(f"UPDATE medications SET user_id={session['user_id']} WHERE RowID={session['info']['med1']}")
+    mydb.commit()
+    db.execute('select * from medication')
+    print(db.fetchall())
+
+
     return redirect('/')
 
 import time
@@ -259,18 +338,45 @@ from math import floor
 @app.route("/dashboard", methods=["GET"])
 @login_required
 def dashboard():
-    meds = db.execute(f"select * from medications WHERE user_id={session['user_id']}")
+    mydb = mysql.connector.connect(
+        host="31.170.167.102",
+        user="u997324830_dkUVG",
+        password="+W;Ca:6fR;2",
+        database='u997324830_z5GnK'
+    )
+    db = mydb.cursor()
+    db.execute(f"select * from medication WHERE ROW_ID={session['user_id']}")
+    # db.execute('select * from medication')
+    meds1 = db.fetchall()[0]
+    # print('hi', meds1)
+    meds = [
+        {
+            'taken':meds1[3],
+            'name':meds1[1],
+            'start_time':int(meds1[10])*60 + int(meds1[9]),
+            'end_time':int(meds1[12])*60 + int(meds1[11]),
+            'time_taken':int(meds1[6])*60 + int(meds1[5]),
+        },
+        {
+            'taken':meds1[4],
+            'name':meds1[2],
+            'start_time':int(meds1[14])*60 + int(meds1[13]),
+            'end_time':int(meds1[16])*60 + int(meds1[15]),
+            'time_taken':int(meds1[8])*60 + int(meds1[7]),
+        }
+    ]
     print(meds)
     current_time = time.strftime("%H:%M:%S", time.localtime())
     current_minutes = (int(current_time[:2]) * 60) + int(current_time[3:5])
     print(current_minutes)
     messages = []
+
     for med in meds:
         
-        if int(med['taken']) == 0:
+        if int(med['taken']) != 1:
             if int(med['start_time']) <= current_minutes and int(med['end_time']) >= current_minutes:   
-                s = f"You will be notified in {int(med['end_time']) - current_minutes - 30} Minutes to take {med['name']}" if int(med['alerted']) != 1 else f"You were notifed to take {med['name']}"     
-                s1 = f"You have {int(med['end_time']) - current_minutes} minutes left to take {med['name']}.\n{s}" 
+                # s = f"You will be notified in {int(med['end_time']) - current_minutes - 30} Minutes to take {med['name']}" if int(med['alerted']) != 1 else f"You were notifed to take {med['name']}"     
+                s1 = f"You have {int(med['end_time']) - current_minutes} minutes left to take {med['name']}.\n" 
             else:
                 s1 = f"You did not take {med['name']}! Please do in the future"
         else:
